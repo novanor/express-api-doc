@@ -23,21 +23,23 @@ class Docks {
     clearStream.end();
   }
 
-  track(opt = {}) {
+  track(config = {}) {
     this.writeChannel = chan();
-    const examplesPath = opt.path || path.resolve('public/examples.txt');
-    this.writeToFile(examplesPath);
+    const examplesPath = config.paths.apidoc;
     const self = this;
+
+    this.writeToFile(examplesPath);
+
     this.app.use('/*', (req, res, next) => {
       const originalSend = res.send;
       res.send = function (body, ...args) {
         !self.writeChannel.closed && putAsync(self.writeChannel, {
           url:      req.originalUrl,
           method:   req.method,
-          request:  encodeURI(JSON.stringify(req.body)),
+          request:  req.body,
           status:   res.statusCode,
           type:     res.get('Content-Type'),
-          response: encodeURI(body),
+          response: JSON.parse(body),
         });
         originalSend.call(this, body, ...args);
       };
@@ -51,7 +53,7 @@ class Docks {
       while (!self.writeChannel.closed) {
         const data = yield take(self.writeChannel);
         yield new Promise((res, rej) => {
-          fs.appendFile(examplesPath, `${JSON.stringify(data)},`, (err) => {
+          fs.appendFile(examplesPath, `${JSON.stringify(data, null, 2)},`, (err) => {
             if (err) {
               return rej(err);
             }
@@ -118,8 +120,8 @@ class Docks {
     return JSON.parse(examples);
   }
 
-  generate(opt = {}) {
-    const examplesSource = opt.examples ? Docks.getExamples(opt.examples) : '';
+  generate(config = {}) {
+    const examplesSource = config.paths.examples ? Docks.getExamples(config.paths.examples) : '';
     const routes = this.getAllRoutes();
     const examples = [];
     _.each(routes, (route) => {
@@ -143,16 +145,16 @@ class Docks {
       });
       route.prefixRegexp = prefixRegexp.toString();
     });
-    let template = opt.template ? fs.readFileSync(path.resolve(opt.template)) : fs.readFileSync(templateSourcePath);
-    let title = opt.title;
+    let template = config.paths.template ? fs.readFileSync(path.resolve(config.paths.template)) : fs.readFileSync(templateSourcePath);
     template = template.toString();
-    template = template.replace("'{{ROUTES}}'", JSON.stringify(routes));
-    template = template.replace("'{{EXAMPLES}}'", JSON.stringify(examples));
-    template = template.replace("'{{CONFIG}}'", JSON.stringify(opt));
-    template = template.replace("'{{TITLE}}'", JSON.stringify(title));
-    fs.writeFileSync(path.resolve(opt.path || 'public/template.html'), template);
+    template = template.replace("'{{ROUTES}}'", JSON.stringify(routes, null, 2));
+    template = template.replace("'{{EXAMPLES}}'", JSON.stringify(examples, null, 2));
+    template = template.replace("'{{TITLE}}'", JSON.stringify(config.meta.title, null, 2));
+    template = template.replace("'{{DESCRIPTION}}'", JSON.stringify(config.meta.title, null, 2));
+    template = template.replace("'{{CONFIG}}'", JSON.stringify(config, null, 2));
+    fs.writeFileSync(path.resolve(config.paths.apidoc || 'public/template.html'), template);
     if (examplesSource) {
-      const examplesPath = path.resolve(opt.examples) || path.resolve('public/examples.txt');
+      const examplesPath = path.resolve(config.paths.examples) || path.resolve('public/examples.txt');
       Docks.clearFile(examplesPath);
     }
     process.exit(0); // eslint-disable-line no-process-exit
