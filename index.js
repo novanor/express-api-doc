@@ -6,27 +6,6 @@ class Docks {
         this.app = app;
     }
 
-    getExamples(examplesPath) {
-        var examples = fs.readFileSync(examplesPath).toString();
-
-        return examples.length ? JSON.parse(examples) : [];
-    }
-
-    addExampleToFile(examplesPath, example) {
-        return new Promise((resolve, reject) => {
-            try {
-                let examples = this.getExamples(examplesPath);
-                examples.push(example);
-
-                fs.writeFileSync(examplesPath, JSON.stringify(examples, null, 2));
-
-                resolve('Example added');
-            } catch (err) {
-                reject(err);
-            }
-        });
-    }
-
     track(config) {
         const _this = this;
 
@@ -51,6 +30,53 @@ class Docks {
                 originalSend.call(this, body, ...args);
             };
             next();
+        });
+    }
+
+    generate(config) {
+        const routes = this.getAllRoutes();
+        const examples = this.getExamples(config.paths.examples);
+        var examplesByRoute = [];
+
+        routes.forEach((route, index) => {
+            route.id = (index+1).toString();
+            route.params = this.extractParamsFromPath(route.path);
+        });
+
+        examplesByRoute = this.matchExamplesToRoutes(examples, routes);
+
+        // Place all definitions in the template and write to apidoc file
+        fs.writeFileSync(config.paths.apidoc, fs.readFileSync(config.paths.template)
+            .toString()
+            .replace("'{{ROUTES}}'", JSON.stringify(routes, null, 2))
+            .replace("'{{EXAMPLES}}'", JSON.stringify(examplesByRoute, null, 2))
+            .replace("'{{TITLE}}'", JSON.stringify(config.meta.title, null, 2))
+            .replace("'{{DESCRIPTION}}'", JSON.stringify(config.meta.title, null, 2))
+            .replace("'{{CONFIG}}'", JSON.stringify(config, null, 2))
+        );
+
+        // eslint-disable-line no-process-exit
+        process.exit(0);
+    }
+
+    getExamples(examplesPath) {
+        var examples = fs.readFileSync(examplesPath).toString();
+
+        return examples.length ? JSON.parse(examples) : [];
+    }
+
+    addExampleToFile(examplesPath, example) {
+        return new Promise((resolve, reject) => {
+            try {
+                let examples = this.getExamples(examplesPath);
+                examples.push(example);
+
+                fs.writeFileSync(examplesPath, JSON.stringify(examples, null, 2));
+
+                resolve('Example added');
+            } catch (err) {
+                reject(err);
+            }
         });
     }
 
@@ -97,32 +123,6 @@ class Docks {
         });
 
         return routes;
-    }
-
-    generate(config) {
-        const routes = this.getAllRoutes();
-        const examples = this.getExamples(config.paths.examples);
-        var examplesByRoute = [];
-
-        routes.forEach((route, index) => {
-            route.id = (index+1).toString();
-            route.params = this.extractParamsFromPath(route.path);
-        });
-
-        examplesByRoute = this.matchExamplesToRoutes(examples, routes);
-
-        // Place all definitions in the template and write to apidoc file
-        fs.writeFileSync(config.paths.apidoc, fs.readFileSync(config.paths.template)
-            .toString()
-            .replace("'{{ROUTES}}'", JSON.stringify(routes, null, 2))
-            .replace("'{{EXAMPLES}}'", JSON.stringify(examplesByRoute, null, 2))
-            .replace("'{{TITLE}}'", JSON.stringify(config.meta.title, null, 2))
-            .replace("'{{DESCRIPTION}}'", JSON.stringify(config.meta.title, null, 2))
-            .replace("'{{CONFIG}}'", JSON.stringify(config, null, 2))
-        );
-
-        // eslint-disable-line no-process-exit
-        process.exit(0);
     }
 
     matchExamplesToRoutes(examples, routes) {
