@@ -3,6 +3,11 @@
   "description": "Auto generated express documentation",
   "version": "0.0.12",
   "dependencies": {},
+  "devDependencies": {
+    "eslint": "^4.15.0",
+    "eslint-config-airbnb-base": "^12.1.0",
+    "eslint-plugin-import": "^2.8.0"
+  },
   "peerDependencies": {
     "express": "^4.13.1"
   },

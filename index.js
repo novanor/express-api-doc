@@ -1,4 +1,5 @@
-'use strict';
+/* eslint-disable no-param-reassign, no-underscore-dangle, no-console, no-process-exit */
+
 const fs = require('fs');
 
 class Docks {
@@ -11,10 +12,8 @@ class Docks {
 
         this.app.use('/*', (req, res, next) => {
             const originalSend = res.send;
-            res.send = function(body, ...args) {
-                // TODO: remember to remove console.log
-                console.log(body);
-                let example = {
+            res.send = function (body, ...args) {
+                const example = {
                     url: req.originalUrl,
                     method: req.method,
                     request: req.body,
@@ -36,10 +35,10 @@ class Docks {
     generate(config) {
         const routes = this.getAllRoutes();
         const examples = this.getExamples(config.paths.examples);
-        var examplesByRoute = [];
+        let examplesByRoute = [];
 
         routes.forEach((route, index) => {
-            route.id = (index+1).toString();
+            route.id = (index + 1).toString();
             route.params = this.extractParamsFromPath(route.path);
         });
 
@@ -52,15 +51,13 @@ class Docks {
             .replace("'{{EXAMPLES}}'", JSON.stringify(examplesByRoute, null, 2))
             .replace("'{{TITLE}}'", JSON.stringify(config.meta.title, null, 2))
             .replace("'{{DESCRIPTION}}'", JSON.stringify(config.meta.title, null, 2))
-            .replace("'{{CONFIG}}'", JSON.stringify(config, null, 2))
-        );
+            .replace("'{{CONFIG}}'", JSON.stringify(config, null, 2)));
 
-        // eslint-disable-line no-process-exit
         process.exit(0);
     }
 
     getExamples(examplesPath) {
-        var examples = fs.readFileSync(examplesPath).toString();
+        const examples = fs.readFileSync(examplesPath).toString();
 
         return examples.length ? JSON.parse(examples) : [];
     }
@@ -68,9 +65,9 @@ class Docks {
     addExampleToFile(examplesPath, example) {
         return new Promise((resolve, reject) => {
             try {
-                let examples = this.getExamples(examplesPath);
-                examples.push(example);
+                const examples = this.getExamples(examplesPath);
 
+                examples.push(example);
                 fs.writeFileSync(examplesPath, JSON.stringify(examples, null, 2));
 
                 resolve('Example added');
@@ -88,16 +85,19 @@ class Docks {
                 const nested = this.getNestedRoutes(handler, handler.handle.stack);
                 nested.forEach(route => {
                     routes.push(route);
-                })
+                });
             }
 
-            const route = handler.route;
-            route && routes.push({
-                path: route.path,
-                methods: route.methods,
-                prefixRegexp: middleware.regexp,
-                prefix: middleware.regexp.source.replace(/\\|\^|\?|=|\||\$|\(.*\)|\+/ig, '')
-            });
+            const {route} = handler;
+
+            if (route) {
+                routes.push({
+                    path: route.path,
+                    methods: route.methods,
+                    prefixRegexp: middleware.regexp,
+                    prefix: middleware.regexp.source.replace(/\\|\^|\?|=|\||\$|\(.*\)|\+/ig, ''),
+                });
+            }
         });
 
         return routes;
@@ -105,17 +105,17 @@ class Docks {
 
     getAllRoutes() {
         const routes = [];
+        let nested = [];
         this.app._router.stack.forEach(middleware => {
             if (middleware.route) {
                 routes.push({
                     path: middleware.route.path,
                     methods: middleware.route.methods,
                     prefixRegexp: middleware.regexp,
-                    prefix: middleware.regexp.source.replace(/\\|\^|\?|=|\||\$|\(.*\)|\+/ig, '')
+                    prefix: middleware.regexp.source.replace(/\\|\^|\?|=|\||\$|\(.*\)|\+/ig, ''),
                 });
             } else if (middleware.name === 'router') {
-
-                var nested = this.getNestedRoutes(middleware, middleware.handle.stack);
+                nested = this.getNestedRoutes(middleware, middleware.handle.stack);
                 nested.forEach(route => {
                     routes.push(route);
                 });
@@ -126,9 +126,9 @@ class Docks {
     }
 
     matchExamplesToRoutes(examples, routes) {
-        var examplesByRoute = [];
+        const examplesByRoute = [];
 
-        routes.forEach((route, index) => {
+        routes.forEach(route => {
             const routeRegexpString = `${route.path.replace(/\//ig, '\\/').replace(/\/:([^/]+)/ig, '/[^\\/]+')}(?:\\?.*)?$`;
 
             const examplesForRoute = examples.filter((example) => {
@@ -138,12 +138,12 @@ class Docks {
             route.examplesPresent = !!examplesForRoute.length;
 
             examplesForRoute.forEach((e, index) => {
-                e.id = (index+1).toString();
+                e.id = (index + 1).toString();
             });
 
             examplesByRoute.push({
                 routeId: route.id,
-                rows: examplesForRoute
+                rows: examplesForRoute,
             });
         });
 
