@@ -2,7 +2,9 @@
   "name": "express-api-doc",
   "description": "Auto generated express documentation",
   "version": "0.0.12",
-  "dependencies": {},
+  "dependencies": {
+    "express": "^4.16.2"
+  },
   "devDependencies": {
     "eslint": "^4.15.0",
     "eslint-config-airbnb-base": "^12.1.0",
