@@ -15,6 +15,7 @@ module.exports = class ApiDocGenerator {
         routes.forEach((route, index) => {
             route.id = (index + 1).toString();
             route.params = this.extractParamsFromPath(route.path);
+            route.meta = this.getRouteMeta(this.app, route);
         });
 
         examplesByRoute = this.matchExamplesToRoutes(examples, routes);
@@ -45,11 +46,13 @@ module.exports = class ApiDocGenerator {
             const {route} = handler;
 
             if (route) {
-                routes.push({
-                    path: route.path,
-                    methods: route.methods,
-                    prefixRegexp: middleware.regexp,
-                    prefix: middleware.regexp.source.replace(/\\|\^|\?|=|\||\$|\(.*\)|\+/ig, ''),
+                this.getRouteMethods(route).forEach(method => {
+                    routes.push({
+                        path: route.path,
+                        method,
+                        prefixRegexp: middleware.regexp,
+                        prefix: middleware.regexp.source.replace(/\\|\^|\?|=|\||\$|\(.*\)|\+/ig, ''),
+                    });
                 });
             }
         });
@@ -62,11 +65,13 @@ module.exports = class ApiDocGenerator {
         let nested = [];
         this.app._router.stack.forEach(middleware => {
             if (middleware.route) {
-                routes.push({
-                    path: middleware.route.path,
-                    methods: middleware.route.methods,
-                    prefixRegexp: middleware.regexp,
-                    prefix: middleware.regexp.source.replace(/\\|\^|\?|=|\||\$|\(.*\)|\+/ig, ''),
+                this.getRouteMethods(middleware.route).forEach(method => {
+                    routes.push({
+                        path: middleware.route.path,
+                        method,
+                        prefixRegexp: middleware.regexp,
+                        prefix: middleware.regexp.source.replace(/\\|\^|\?|=|\||\$|\(.*\)|\+/ig, ''),
+                    });
                 });
             } else if (middleware.name === 'router') {
                 nested = this.getNestedRoutes(middleware, middleware.handle.stack);
@@ -79,6 +84,20 @@ module.exports = class ApiDocGenerator {
         return routes;
     }
 
+    getRouteMethods(route) {
+        const methods = [];
+
+        if (route.methods) {
+            Object.keys(route.methods).forEach(method => {
+                if (Object.hasOwnProperty.call(route.methods, method)) {
+                    methods.push(method);
+                }
+            });
+        }
+
+        return methods;
+    }
+
     matchExamplesToRoutes(examples, routes) {
         const examplesByRoute = [];
 
@@ -87,7 +106,7 @@ module.exports = class ApiDocGenerator {
 
             const examplesForRoute = examples.filter((example) => {
                 return example.url.match(routeRegexpString)
-                       && route.methods[example.method.toLowerCase()];
+                       && route.method === example.method.toLowerCase();
             });
 
             route.examplesPresent = !!examplesForRoute.length;
@@ -109,5 +128,13 @@ module.exports = class ApiDocGenerator {
         const params = path.match(/\/:([^/]+)/g);
 
         return params ? params.map(param => param.replace('/:', '')) : [];
+    }
+
+    getRouteMeta(app, route) {
+        const {routesMeta} = app;
+
+        return routesMeta[route.path] && routesMeta[route.path][route.method]
+            ? routesMeta[route.path][route.method]
+            : {};
     }
 };
