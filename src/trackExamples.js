@@ -7,13 +7,24 @@ module.exports = function trackExamples(app, config) {
     app.use('/*', (req, res, next) => {
         const originalSend = res.send;
         res.send = function (body, ...args) {
+            const responseHeaders = {};
+            res.getHeaderNames().forEach(header => {
+                responseHeaders[header] = res.get(header);
+            });
+
             const example = {
                 url: req.originalUrl,
                 method: req.method,
-                request: req.body,
+                request: {
+                    headers: req.headers,
+                    body: req.body,
+                },
                 status: res.statusCode,
                 type: res.get('Content-Type'),
-                response: JSON.parse(body),
+                response: {
+                    headers: responseHeaders,
+                    body: JSON.parse(body),
+                },
             };
 
             addExampleToFile(config.path, example)
