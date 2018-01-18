@@ -1,6 +1,10 @@
 const fs = require('fs');
 
 const getExamples = (examplesPath) => {
+    if (!fs.existsSync(examplesPath)) {
+        return [];
+    }
+
     const examples = fs.readFileSync(examplesPath).toString();
 
     return examples.length ? JSON.parse(examples) : [];
