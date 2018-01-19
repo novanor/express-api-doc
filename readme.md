@@ -126,6 +126,6 @@ trackExamples(app, {
 **To stop the tracking, just comment out the code**
 
 ### Preview of list of available routes:
-![list](https://github.com/forestlake/express-api-doc/blob/master/images/list.jpg?raw=true)
-### Preview of sendbox with example:
-![sendbox](https://github.com/forestlake/express-api-doc/blob/master/images/sendbox.jpg?raw=true)
+![list](https://github.com/novanor/express-api-doc/blob/master/images/list.png?raw=true)
+### Preview of route info page with examples:
+![sendbox](https://github.com/novanor/express-api-doc/blob/master/images/route.png?raw=true)
