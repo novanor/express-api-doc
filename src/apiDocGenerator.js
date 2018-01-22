@@ -20,16 +20,13 @@ module.exports = class ApiDocGenerator {
 
         examplesByRoute = this.matchExamplesToRoutes(examples, routes);
 
-        // Place all definitions in the template and write to apidoc file
-        fs.writeFileSync(config.paths.apidoc, fs.readFileSync(config.paths.template)
+        return fs.readFileSync(config.paths.template)
             .toString()
             .replace("'{{ROUTES}}'", JSON.stringify(routes, null, 2))
             .replace("'{{EXAMPLES}}'", JSON.stringify(examplesByRoute, null, 2))
             .replace("'{{TITLE}}'", JSON.stringify(config.meta.title, null, 2))
             .replace("'{{DESCRIPTION}}'", JSON.stringify(config.meta.title, null, 2))
-            .replace("'{{CONFIG}}'", JSON.stringify(config, null, 2)));
-
-        process.exit(0);
+            .replace("'{{CONFIG}}'", JSON.stringify(config, null, 2));
     }
 
     getNestedRoutes(middleware, stack) {
