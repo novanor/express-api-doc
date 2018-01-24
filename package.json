@@ -3,7 +3,8 @@
   "description": "Auto generated express documentation",
   "version": "0.0.12",
   "dependencies": {
-    "express": "^4.16.2"
+    "express": "^4.16.2",
+    "uuid": "^3.2.1"
   },
   "devDependencies": {
     "eslint": "^4.15.0",
