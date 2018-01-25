@@ -33,7 +33,7 @@ module.exports = function trackExamples(app, config) {
                     },
                 };
 
-                addExampleToFile(config.path, example)
+                addExampleToFile(config.paths.examples, example)
                     .then(success => console.info('\x1b[32m%s\x1b[39m', success))
                     .catch(err => { throw err; });
             } catch (err) {
