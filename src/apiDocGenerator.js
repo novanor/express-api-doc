@@ -18,7 +18,7 @@ module.exports = class ApiDocGenerator {
             route.meta = this.getRouteMeta(this.app, route);
         });
 
-        examplesByRoute = this.matchExamplesToRoutes(examples, routes);
+        examplesByRoute = this.getExamplesByRoute(examples, routes);
 
         return fs.readFileSync(config.paths.template)
             .toString()
@@ -95,14 +95,10 @@ module.exports = class ApiDocGenerator {
         return methods;
     }
 
-    matchExamplesToRoutes(examples, routes) {
-        const examplesByRoute = [];
-
-        routes.forEach(route => {
-            const routeRegexpString = `${route.path.replace(/\//ig, '\\/').replace(/\/:([^/]+)/ig, '/[^\\/]+')}(?:\\?.*)?$`;
-
+    getExamplesByRoute(examples, routes) {
+        return routes.map(route => {
             const examplesForRoute = examples.filter((example) => {
-                return example.url.match(routeRegexpString)
+                return this.exampleIsForRoute(example, route)
                        && route.method === example.method.toLowerCase();
             });
 
@@ -112,13 +108,30 @@ module.exports = class ApiDocGenerator {
                 e.id = (index + 1).toString();
             });
 
-            examplesByRoute.push({
+            return {
                 routeId: route.id,
                 rows: examplesForRoute,
-            });
+            };
         });
+    }
 
-        return examplesByRoute;
+    putExamplesInRoutes(examples, routes) {
+        return routes.map(route => {
+            const examplesForRoute = examples.filter((example) => {
+                return this.exampleIsForRoute(example, route)
+                       && route.method === example.method.toLowerCase();
+            });
+
+            return {
+                ...route,
+                examples: examplesForRoute,
+            };
+        });
+    }
+
+    exampleIsForRoute(example, route) {
+        const routeRegexpString = `${route.path.replace(/\//ig, '\\/').replace(/\/:([^/]+)/ig, '/[^\\/]+')}(?:\\?.*)?$`;
+        return example.url.match(routeRegexpString);
     }
 
     extractParamsFromPath(path) {
