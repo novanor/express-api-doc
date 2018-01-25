@@ -1,4 +1,4 @@
-const {addExampleToFile} = require('./utils/examples');
+const JsonFile = require('./utils/jsonFile');
 
 // Enable tracking of examples for the apidoc
 module.exports = function trackExamples(app, config) {
@@ -33,8 +33,8 @@ module.exports = function trackExamples(app, config) {
                     },
                 };
 
-                addExampleToFile(config.paths.examples, example)
-                    .then(success => console.info('\x1b[32m%s\x1b[39m', success))
+                JsonFile.addItemAsync(config.paths.examples, example)
+                    .then(() => console.info('\x1b[32m%s\x1b[39m', 'Example added'))
                     .catch(err => { throw err; });
             } catch (err) {
                 console.info('\x1b[31m%s\x1b[39m%s', 'Example not recorded: ', err);

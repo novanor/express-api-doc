@@ -1,5 +1,5 @@
 const fs = require('fs');
-const {getExamples} = require('./utils/examples');
+const JsonFile = require('./utils/jsonFile');
 
 module.exports = class ApiDocGenerator {
     constructor(app) {
@@ -7,9 +7,9 @@ module.exports = class ApiDocGenerator {
     }
 
     generate(config) {
-        const examples = getExamples(config.paths.examples);
+        const examples = JsonFile.getContent(config.paths.examples);
 
-        const routes = this.getAllRoutes().map((route, index) => ({
+        const routes = this.getAllRoutes(config.skip).map((route, index) => ({
             ...route,
             id: (index + 1).toString(),
             params: this.extractParamsFromPath(route.path),
@@ -55,9 +55,10 @@ module.exports = class ApiDocGenerator {
         return routes;
     }
 
-    getAllRoutes() {
+    getAllRoutes(skipRoutes) {
         const routes = [];
         let nested = [];
+
         this.app._router.stack.forEach(middleware => { // eslint-disable-line no-underscore-dangle
             if (middleware.route) {
                 this.getRouteMethods(middleware.route).forEach(method => {
@@ -76,7 +77,9 @@ module.exports = class ApiDocGenerator {
             }
         });
 
-        return routes;
+        return skipRoutes && skipRoutes.length
+            ? routes.filter(route => skipRoutes.indexOf(route.path) < 0)
+            : routes;
     }
 
     getRouteMethods(route) {
@@ -100,6 +103,7 @@ module.exports = class ApiDocGenerator {
                        && route.method === example.method.toLowerCase();
             });
 
+            // eslint-disable-next-line no-param-reassign
             route.examplesPresent = !!examplesForRoute.length;
 
             examplesForRoute.forEach((e, index) => {
