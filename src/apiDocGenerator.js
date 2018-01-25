@@ -1,4 +1,3 @@
-/* eslint-disable no-param-reassign, no-underscore-dangle, no-process-exit */
 const fs = require('fs');
 const {getExamples} = require('./utils/examples');
 
@@ -8,17 +7,16 @@ module.exports = class ApiDocGenerator {
     }
 
     generate(config) {
-        const routes = this.getAllRoutes();
         const examples = getExamples(config.paths.examples);
-        let examplesByRoute = [];
 
-        routes.forEach((route, index) => {
-            route.id = (index + 1).toString();
-            route.params = this.extractParamsFromPath(route.path);
-            route.meta = this.getRouteMeta(this.app, route);
-        });
+        const routes = this.getAllRoutes().map((route, index) => ({
+            ...route,
+            id: (index + 1).toString(),
+            params: this.extractParamsFromPath(route.path),
+            meta: this.getRouteMeta(this.app, route),
+        }));
 
-        examplesByRoute = this.getExamplesByRoute(examples, routes);
+        const examplesByRoute = this.getExamplesByRoute(examples, routes);
 
         return fs.readFileSync(config.paths.template)
             .toString()
@@ -60,7 +58,7 @@ module.exports = class ApiDocGenerator {
     getAllRoutes() {
         const routes = [];
         let nested = [];
-        this.app._router.stack.forEach(middleware => {
+        this.app._router.stack.forEach(middleware => { // eslint-disable-line no-underscore-dangle
             if (middleware.route) {
                 this.getRouteMethods(middleware.route).forEach(method => {
                     routes.push({
