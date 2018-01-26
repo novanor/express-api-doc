@@ -1,5 +1,12 @@
 const fs = require('fs');
 const JsonFile = require('./utils/jsonFile');
+const {
+    Collection,
+    // Folder,
+    Route,
+    Request,
+    Example,
+} = require('./models');
 
 module.exports = class ApiDocGenerator {
     constructor(app) {
@@ -25,6 +32,48 @@ module.exports = class ApiDocGenerator {
             .replace("'{{TITLE}}'", JSON.stringify(config.meta.title, null, 2))
             .replace("'{{DESCRIPTION}}'", JSON.stringify(config.meta.title, null, 2))
             .replace("'{{CONFIG}}'", JSON.stringify(config, null, 2));
+    }
+
+    // TODO: Think of a way to automatically group routes in folders
+    getJsonForPostmanImport(config) {
+        const examples = JsonFile.getContent(config.paths.examples);
+        const routes = this.putExamplesAndMetaInRoutes(examples, this.getAllRoutes(config.skip));
+
+        const collection = new Collection(
+            config.meta.title,
+            config.meta.description ? config.meta.description.replace('\n', '') : '',
+            config.postmanCollectionId,
+        );
+
+        routes.forEach(r => {
+            const body = {};
+
+            // Construct a body using the documented keys and empty values
+            if (r.meta.bodyParams) {
+                Object.keys(r.meta.bodyParams).forEach(key => body[key] = '');
+            }
+
+            const request = new Request(
+                r.method,
+                r.path,
+                r.meta.description ? r.meta.description.replace('\n', '') : '',
+                r.meta.headerParams ? r.meta.headerParams : {},
+                body,
+            );
+
+            const route = new Route(
+                r.path,
+                request,
+            );
+
+            r.examples.forEach(example => {
+                route.addExample(Example.fromTrackerExample(example));
+            });
+
+            collection.addItem(route);
+        });
+
+        return JSON.stringify(collection.getPostmanObject(), null, 2);
     }
 
     getNestedRoutes(middleware, stack) {
@@ -117,16 +166,22 @@ module.exports = class ApiDocGenerator {
         });
     }
 
-    putExamplesInRoutes(examples, routes) {
+    putExamplesAndMetaInRoutes(examples, routes) {
         return routes.map(route => {
             const examplesForRoute = examples.filter((example) => {
                 return this.exampleIsForRoute(example, route)
                        && route.method === example.method.toLowerCase();
             });
 
+            const meta = this.app.routesMeta[route.path]
+                && this.app.routesMeta[route.path][route.method]
+                ? this.app.routesMeta[route.path][route.method]
+                : {};
+
             return {
                 ...route,
                 examples: examplesForRoute,
+                meta,
             };
         });
     }

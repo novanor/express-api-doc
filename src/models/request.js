@@ -2,7 +2,7 @@ const {getPathParts} = require('../utils/url');
 const objectToKeyValueArray = require('../utils/objectToKeyValueArray');
 
 module.exports = class Request {
-    constructor(method = '', path = '', description = '', headers = {}, body = '', bodyType = 'raw', contentType = 'application/json') {
+    constructor(method = '', path = '', description = '', headers = {}, body = {}, bodyType = 'raw', contentType = 'application/json') {
         this.method = method;
         this.description = description;
         this.body = this.getBody(bodyType, contentType, body);
@@ -42,11 +42,8 @@ module.exports = class Request {
 
     getPostmanObject() {
         return {
-            method: this.method,
-            description: this.description,
-            body: this.body,
+            ...this,
             header: this.headers,
-            url: this.url,
         };
     }
 };

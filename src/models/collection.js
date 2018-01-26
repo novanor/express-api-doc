@@ -2,8 +2,8 @@ module.exports = class Collection {
     constructor(
         name = '',
         description = '',
+        postmanId = '',
         schema = 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
-        postmanId = ''
     ) {
         this.info = {
             name,

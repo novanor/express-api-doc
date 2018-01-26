@@ -9,9 +9,10 @@ module.exports = class Example {
         return this;
     }
 
-    importTrackerExample(trackerExample) {
-        this.name = `${trackerExample.status} Example`;
-        this.originalRequest = {
+    static fromTrackerExample(trackerExample) {
+        const example = new Example();
+        example.name = `${trackerExample.status} Example`;
+        example.originalRequest = {
             method: trackerExample.method,
             header: objectToKeyValueArray(trackerExample.request.headers),
             body: {
@@ -22,12 +23,12 @@ module.exports = class Example {
                 path: getPathParts(trackerExample.url),
             },
         };
-        this.header = objectToKeyValueArray(trackerExample.response.headers);
-        this.body = JSON.stringify(trackerExample.response.body);
+        example.header = objectToKeyValueArray(trackerExample.response.headers);
+        example.body = JSON.stringify(trackerExample.response.body);
 
-        this.code = trackerExample.status;
+        example.code = trackerExample.status;
 
-        return this;
+        return example;
     }
 
     getPostmanObject() {
@@ -36,6 +37,7 @@ module.exports = class Example {
             name: this.name,
             originalRequest: this.originalRequest,
             code: this.code,
+            header: this.header,
             body: this.body,
 
             _postman_previewlanguage: 'json',
