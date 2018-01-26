@@ -12,7 +12,7 @@ module.exports = class Request {
             port: '',
             path: getPathParts(path),
         };
-        this.headers = objectToKeyValueArray(headers, 'key', 'description').map(header => {
+        this.header = objectToKeyValueArray(headers, 'key', 'description').map(header => {
             return {
                 key: header.key,
                 value: '',
@@ -43,7 +43,6 @@ module.exports = class Request {
     getPostmanObject() {
         return {
             ...this,
-            header: this.headers,
         };
     }
 };
