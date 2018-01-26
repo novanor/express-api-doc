@@ -47,16 +47,22 @@ module.exports = class ApiDocGenerator {
 
         routes.forEach(r => {
             const body = {};
+            let routeDescription = r.meta.description ? r.meta.description : '';
 
             // Construct a body using the documented keys and empty values
             if (r.meta.bodyParams) {
-                Object.keys(r.meta.bodyParams).forEach(key => body[key] = '');
+                routeDescription = routeDescription.concat('<br><br>**Body params**');
+
+                Object.keys(r.meta.bodyParams).forEach(key => {
+                    body[key] = '';
+                    routeDescription = routeDescription.concat(`<br>\`${key}\` - ${r.meta.bodyParams[key]}`);
+                });
             }
 
             const request = new Request(
                 r.method,
                 r.path,
-                r.meta.description ? r.meta.description.replace('\n', '') : '',
+                routeDescription || '',
                 r.meta.headerParams ? r.meta.headerParams : {},
                 body,
             );
